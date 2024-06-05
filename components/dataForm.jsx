@@ -12,6 +12,8 @@ function DataForm() {
   const [quantity, setQuantity] = useState(0);
   const [reorderPoint, setReorderPoint] = useState(0);
   const [price, setPrice] = useState(0);
+  const [brand, setBrand] = useState("");
+  const [manufacturer, setManufacturer] = useState("");
   const [error, setError] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -34,18 +36,20 @@ function DataForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || quantity === 0 || reorderPoint === 0 || price === 0) {
-      setError("Name, quantity, reorder point, and price are required");
+    if (!name || quantity === 0 || reorderPoint === 0 || price === 0 || !brand || !manufacturer) {
+      setError("Name, quantity, reorder point, price, brand, and manufacturer are required");
       return;
     }
     try {
       const method = editItem ? "put" : "post";
       const url = editItem ? `${API_URL}/${editItem._id}` : API_URL;
-      const response = await axios[method](url, { name, quantity, reorderPoint, price });
+      const response = await axios[method](url, { name, quantity, reorderPoint, price, brand, manufacturer });
       setName("");
       setQuantity(0);
       setReorderPoint(0);
       setPrice(0);
+      setBrand("");
+      setManufacturer("");
       setEditItem(null);
       setError(null);
       fetchData();
@@ -63,6 +67,8 @@ function DataForm() {
     setQuantity(itemToEdit.quantity);
     setReorderPoint(itemToEdit.reorderPoint);
     setPrice(itemToEdit.price);
+    setBrand(itemToEdit.brand);
+    setManufacturer(itemToEdit.manufacturer);
     setShowModal(true);
   };
 
@@ -80,13 +86,13 @@ function DataForm() {
   const generateReport = () => {
     const doc = new jsPDF();
     let y = 10;
-    doc.text("Fruits Inventory Report", 10, y);
+    doc.text("Auto Assist Inventory Report", 10, y);
     y += 10;
-  
+
     inventory.forEach((item) => {
       let color = item.quantity <= item.reorderPoint ? 'red' : 'black';
       doc.setTextColor(color);
-  
+
       let message = '';
       if (color === 'red') {
         message = ' - Need to add stocks';
@@ -96,10 +102,9 @@ function DataForm() {
       doc.text(`Item: ${item.name}, Quantity: ${item.quantity}, Reorder Point: ${item.reorderPoint}${message}`, 10, y);
       y += 10;
     });
-  
+
     doc.save("inventory_report.pdf");
   };
-  
 
   return (
     <div>
@@ -140,6 +145,18 @@ function DataForm() {
                   onChange={(e) => setPrice(parseFloat(e.target.value))}
                   placeholder="Price"
                 />
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="Brand"
+                />
+                <input
+                  type="text"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  placeholder="Manufacturer"
+                />
               </div>
               <button className="add-data" type="submit">{editItem ? 'Update Item' : 'Add Item'}</button>
             </form>
@@ -156,6 +173,8 @@ function DataForm() {
               <th>Quantity</th>
               <th>Reorder</th>
               <th>Price</th>
+              <th>Brand</th>
+              <th>Manufacturer</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -167,6 +186,8 @@ function DataForm() {
                 <td style={{ textAlign: 'center', color: item.quantity <= item.reorderPoint ? 'red' : 'black' }}>{item.quantity}</td>
                 <td style={{ textAlign: 'center' }}>{item.reorderPoint}</td>
                 <td style={{ textAlign: 'center' }}>{item.price}</td>
+                <td style={{ textAlign: 'center' }}>{item.brand}</td>
+                <td style={{ textAlign: 'center' }}>{item.manufacturer}</td>
                 <td>
                   <div className="buttons">
                     <button className="edit-button" onClick={() => handleEdit(item._id)}>Edit</button>
@@ -178,8 +199,7 @@ function DataForm() {
           </tbody>
         </table>
       </div>
-      <button className="generate-reports" onClick={generateReport}>Generate
- Report</button>
+      <button className="generate-reports" onClick={generateReport}>Generate Report</button>
     </div>
   );
 }
